@@ -3,7 +3,6 @@ Metasploit Modules
 
 A collection of Metasploit modules.
 
-
 Installation
 ============
 
