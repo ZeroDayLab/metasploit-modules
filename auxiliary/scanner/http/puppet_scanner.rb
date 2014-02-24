@@ -30,36 +30,50 @@ class Metasploit3 < Msf::Auxiliary
   end
 
 
-  def fingerpring(res)
+  def fingerprint(res)
+      version = "Puppetmaster"
+      puppet_ver = "< 3.3.1-rc3"
+      http_fingerprint({ :response => res })
 
-        http_fingerprint({ :response => res })
-        tserver = res.headers['Server']
+      data = res.headers['X-Puppet-Version']
+      if data
+        version << " #{data}"
+      else
+        version << " #{puppet_ver}"
+      end
+
+      data = res.headers['Server']
+      version << " running on #{data}" if data
+      return version
   end
 
   def run_host(target_host)
     begin
+      target_uri = '/production/certificate/ca'
       res = send_request_raw({
-        'uri'          => 'production/certificate/ca'),
-        'method'       => 'GET'
+        'uri'          => target_uri,
+        'method'       => 'GET',
         'headers' =>
           {
             'Accept' => 's'
           }
       }, 10)
 
-      if res and res.code.to_i == 200 and res.body.to_s.match(/^-+BEGIN CERTIFICATE-+/)
+      if res and res.code == 200 and res.body.match(/^-+BEGIN CERTIFICATE-+/)
+        version = fingerprint(res)
+        print_good("#{target_host} - #{version}")
         report_note(
           {
             :host   => target_host,
             :proto  => 'tcp',
-            :sname =>  'https',
+            :sname  => 'Puppetmaster',
             :port   => rport,
-            :type   => wdtype,
-            :data   => datastore['PATH']
+            :type   => 'Info',
+            :data   => version,
           })
       end
-    rescue ::Rex::ConnectionRefused, ::Rex::HostUnreachable, ::Rex::ConnectionTimeout
-    rescue ::Timeout::Error, ::Errno::EPIPE
+      rescue ::Rex::ConnectionRefused, ::Rex::HostUnreachable, ::Rex::ConnectionTimeout
+      rescue ::Timeout::Error, ::Errno::EPIPE
     end
   end
 end
