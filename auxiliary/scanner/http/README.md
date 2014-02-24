@@ -1,7 +1,7 @@
 puppet_scanner
 ==============
 
-The module detects Puppetmaster installation and attemtps to fingerprint it.
+This module scans for Puppetmaster installations and performs version fingerprinting.
 
 * Example:
 
