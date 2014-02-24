@@ -29,7 +29,12 @@ class Metasploit3 < Msf::Auxiliary
     deregister_options('VHOST')
   end
 
-
+  # Starting from version 3.3.1-rc3 Puppet intruduced a custom HTTP
+  # response header containing the puppet version. It is used
+  # to control yaml backward compatibility mode but also allows
+  # version fingerprinting.
+  # See:
+  # https://github.com/puppetlabs/puppet/commit/70a18ef4d3b1dc9c52c04356bf77b55
   def fingerprint(res)
       version = "Puppetmaster"
       puppet_ver = "< 3.3.1-rc3"
@@ -47,6 +52,11 @@ class Metasploit3 < Msf::Auxiliary
       return version
   end
 
+  # Making a request for the CA Certificate of the puppetmaster doesn’t
+  # require you to be authenticated with your own signed SSL Certificates,
+  # since that’s something you would need before you authenticate.
+  # The puppetmaster server detectection is based on the response to the
+  # below request and presence of the CA cert.
   def run_host(target_host)
     begin
       target_uri = '/production/certificate/ca'
